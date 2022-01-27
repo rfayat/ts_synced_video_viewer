@@ -28,7 +28,7 @@ class Figure(go.Figure):
                 hoverinfo="skip",
                 **kw)
             self.add_trace(trace)
-        self.update_xaxes(rangeslider_visible=True)
+        # self.update_xaxes(rangeslider_visible=True)
         return self
 
     @classmethod
