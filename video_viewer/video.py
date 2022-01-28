@@ -1,7 +1,5 @@
 """Video display component using opencv.
 
-https://stackoverflow.com/a/67856716
-
 Author: Romain Fayat, January 2022
 """
 import cv2
@@ -33,3 +31,25 @@ class VideoCamera(cv2.VideoCapture):
     def current_frame(self):
         "Return the current frame number."
         return super().get(cv2.CAP_PROP_POS_FRAMES)
+
+    @property
+    def frame_count(self):
+        "Return the number of frames in the video."
+        return int(self.get(cv2.CAP_PROP_FRAME_COUNT))
+
+
+class SynchedVideoCamera(VideoCamera):
+    "Allow frame grabing from a hashing table for synchronization purposes."
+
+    def __init__(self, *args, synchro=None, **kwargs):
+        "Create  the object, adding the synchronization as a dictionary."
+        super().__init__(*args, **kwargs)
+        if synchro is None:
+            self.synchro = {i: i for i in range(self.frame_count)}
+        else:
+            self.synchro = synchro
+
+    def get_frame_from_synchro(self, synchro_value=None):
+        "Grab the frame number from the synchro and returns it as bytes."
+        frame_number = self.synchro.get(synchro_value, None)
+        return self.get_frame(frame_number)

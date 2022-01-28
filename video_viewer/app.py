@@ -1,5 +1,9 @@
 """Graphical User Interface for visualizing video synced with time series.
 
+Frames are displayed as an image, an opencv VideoCapture being connected to a
+websocket serving the frames. This is directly inspired by:
+    https://stackoverflow.com/a/67856716
+
 Author: Romain Fayat, January 2022
 """
 import dash
@@ -48,7 +52,7 @@ app.title = "Synced Video Viewer"
 
 # Top navigation bar
 navbar = dbc.Navbar(
-    [html.A([dbc.NavbarBrand("Synced Video Viewer")]), ],
+    [html.A([dbc.NavbarBrand("Synched Video Viewer")]), ],
     color="#37393d", dark=True,
 )
 # Time series
