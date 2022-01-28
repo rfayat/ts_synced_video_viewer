@@ -15,8 +15,31 @@ import threading
 import asyncio
 import base64
 
-current_frame = 0
-COLORS = {"navbar": "#17A2B8"}
+config = {
+    "trace": {
+        "filepath_or_buffer": "data/time_series.csv",
+        "index_col": "fnum",
+        "trace_kwargs": {
+            "x": {
+                "mode": "lines",
+                "hoverinfo": "skip",
+                "line": {"color": "red"}
+            },
+            "y": {
+                "mode": "lines",
+                "hoverinfo": "skip",
+                "line": {"color": "green"}
+            },
+            "z": {
+                "mode": "lines",
+                "hoverinfo": "skip",
+                "line": {"color": "blue"}
+            },
+        }
+    }
+}
+
+current_frame = 0  #  WARNING: GLOBAL variable for selecting the diplayed frame
 
 # Create the app and the layout
 server = Quart(__name__)
@@ -26,21 +49,11 @@ app.title = "Synced Video Viewer"
 # Top navigation bar
 navbar = dbc.Navbar(
     [html.A([dbc.NavbarBrand("Synced Video Viewer")]), ],
-    color=COLORS["navbar"],
-    dark=True,
+    color="#37393d", dark=True,
 )
 # Time series
-trace_kwargs = {
-  "x": {"line": {"color": "red"}},
-  "y": {"line": {"color": "green"}},
-  "z": {"line": {"color": "blue"}},
-}
-fig = Figure.from_csv("data/time_series.csv",
-                      index_col="fnum",
-                      trace_kwargs=trace_kwargs)
-range_slider = dcc.Slider(
-    id="center_slider", min=0, max=1800, step=1, value=0
-)
+fig = Figure.from_csv(**config["trace"])
+range_slider = dcc.Slider(id="center_slider", min=0, max=1800, step=1, value=0)
 # Size of the window
 input_width = dbc.InputGroup([
     dbc.InputGroupAddon("Size of the window", addon_type="prepend"),
@@ -50,6 +63,7 @@ input_width = dbc.InputGroup([
 
 
 async def stream(camera, delay=None):
+    "Grab the current frame and send it to the websocket every delay seconds."
     global current_frame
     while True:
         if delay is not None:
@@ -60,8 +74,10 @@ async def stream(camera, delay=None):
 
 @server.websocket("/stream0")
 async def stream0():
+    "Websocket for streaming frames."
     camera = VideoCamera("data/video.avi")
-    await stream(camera, delay=None)
+    # The delay is introduced here to limit CPU usage
+    await stream(camera, delay=1/100)
 
 
 # Global layout of the app
