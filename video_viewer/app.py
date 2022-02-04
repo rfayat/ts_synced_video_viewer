@@ -19,35 +19,15 @@ from dash_extensions import WebSocket
 import threading
 import asyncio
 import base64
+import sys
+import toml
 
-config = {
-    "video": {
-        "filename": "data/video.avi"
-    },
-    "read_csv": {
-        "filepath_or_buffer": "data/time_series.csv",
-        "index_col": "fnum",
-    },
-    "figure": {
-        "trace_kwargs": {
-            "x": {
-                "mode": "lines",
-                "hoverinfo": "skip",
-                "line": {"color": "red"}
-            },
-            "y": {
-                "mode": "lines",
-                "hoverinfo": "skip",
-                "line": {"color": "green"}
-            },
-            "z": {
-                "mode": "lines",
-                "hoverinfo": "skip",
-                "line": {"color": "blue"}
-            },
-        }
-    }
-}
+if len(sys.argv) < 2:
+    raise ValueError("Expected path toml config file as input.")
+else:
+    path_config = sys.argv[1]
+config = toml.load(path_config)
+
 # WARNING: GLOBAL variables
 current_frame = 0  # Displayed frame
 df = pd.read_csv(**config["read_csv"])
@@ -99,7 +79,7 @@ async def stream0():
 # Global layout of the app
 app.layout = html.Div([
     navbar,
-    html.Img(style={'width': '60%', 'padding': 10}, id="v0"),
+    html.Img(style={'width': '40%', 'padding': 5}, id="v0"),
     WebSocket(url="ws://127.0.0.1:5000/stream0", id="ws0"),
     dcc.Graph(id="data_graph", figure=fig),
     html.Div([range_slider], style={"padding": 10}),

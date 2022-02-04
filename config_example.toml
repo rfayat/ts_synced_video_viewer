@@ -1,0 +1,27 @@
+[video]
+filename = "data/video.avi"
+
+[read_csv]
+filepath_or_buffer = "data/time_series.csv"
+index_col = "fnum"
+
+[figure.trace_kwargs.x]
+mode = "lines"
+hoverinfo = "skip"
+
+[figure.trace_kwargs.y]
+mode = "lines"
+hoverinfo = "skip"
+
+[figure.trace_kwargs.z]
+mode = "lines"
+hoverinfo = "skip"
+
+[figure.trace_kwargs.x.line]
+color = "red"
+
+[figure.trace_kwargs.y.line]
+color = "green"
+
+[figure.trace_kwargs.z.line]
+color = "blue"

@@ -1,5 +1,7 @@
 # Folder containing example data for prototyping
 data/
+# Folder containing config files for prototyping
+config/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
