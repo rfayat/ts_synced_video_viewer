@@ -36,6 +36,7 @@ class Figure(go.Figure):
                        df: pd.DataFrame,
                        trace_kwargs=None,
                        fill_kwargs=None,
+                       heatmap_kwargs=None,
                        range_slider_visible=False):
         "Create a figure and add columns of a dataframe as traces."
         self = cls()
@@ -43,6 +44,8 @@ class Figure(go.Figure):
             self.traces_from_dataframe(df, trace_kwargs)
         if fill_kwargs is not None:
             self.fill_from_dataframe(df, fill_kwargs)
+        if heatmap_kwargs is not None:
+            self.heatmap_from_dataframe(df, heatmap_kwargs)
         if range_slider_visible:
             self.update_xaxes(rangeslider_visible=True)
         return self
@@ -78,16 +81,6 @@ class Figure(go.Figure):
                 color = color_mapping[v]
                 self.fill_areas(x, where=values == v, color=color, **kwargs)
 
-    @classmethod
-    def from_csv(cls, *args, trace_kwargs=None,
-                 range_slider_visible=False,
-                 **kwargs):
-        "Create a figure using data stored as a csv."
-        df = pd.read_csv(*args, **kwargs)
-        return cls.from_dataframe(df=df,
-                                  range_slider_visible=range_slider_visible,
-                                  trace_kwargs=trace_kwargs)
-
     def fill_areas(self, x, where, y_t=1, y_b=0, color="blue", opacity=.2):
         """Shade rectangles along the x axis.
 
@@ -116,3 +109,19 @@ class Figure(go.Figure):
             )
             self.add_trace(rectangle)
         return self
+
+    def heatmap_from_dataframe(self, df, heatmap_kwargs):
+        "Create a heatmap from a DataFrame."
+        columns = heatmap_kwargs.get("columns", [])
+        # If no columns are provided, use them all
+        if len(columns) == 0:
+            columns = list(df)
+        # Select columns in the dataframe
+        columns = list(filter(lambda a: a in df, columns))
+        heatmap = go.Heatmap(
+            x=df.index.values,
+            y=columns,
+            z=df[columns].values.T,
+            hoverinfo="skip",
+        )
+        self.add_trace(heatmap)

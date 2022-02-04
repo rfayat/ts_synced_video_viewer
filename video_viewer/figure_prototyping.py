@@ -7,14 +7,11 @@ import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 from video_viewer.plots import Figure
-import threading
 import pandas as pd
 import numpy as np
 
 config = {
     "figure": {
-        "filepath_or_buffer": "data/time_series.csv",
-        "index_col": "fnum",
         "trace_kwargs": {
             "x": {
                 "mode": "lines",
@@ -38,12 +35,15 @@ config = {
                 "y_t": 1,
             },
         },
+        "heatmap_kwargs": {
+            "columns": ["a", "b", "c", "d", "e", "f", "g", "h"]
+        },
     }
 }
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
-# Time series
+# Time series and cluster filling
 n_points = 1800
 df = pd.DataFrame(np.random.random((n_points, 3)) - .5,
                   columns=["x", "y", "z"])
@@ -55,11 +55,19 @@ cluster[100:300] = 2
 cluster[1200:1400] = 2
 df["cluster"] = cluster
 
-fig = Figure.from_dataframe(
-    df=df,
-    trace_kwargs=config["figure"]["trace_kwargs"],
-    fill_kwargs=config["figure"]["fill_kwargs"],
-    range_slider_visible=True)
+# fig = Figure.from_dataframe(
+#     df=df,
+#     trace_kwargs=config["figure"]["trace_kwargs"],
+#     fill_kwargs=config["figure"]["fill_kwargs"],
+#     range_slider_visible=True)
+
+# Heatmap
+n_points = 1800
+columns = ["a", "b", "c", "d", "e", "f", "g", "h"]
+df = pd.DataFrame(np.random.random((n_points, len(columns))),
+                  columns=columns)
+fig = Figure.from_dataframe(df=df,
+                            heatmap_kwargs=config["figure"]["heatmap_kwargs"])
 
 # Layout of the app
 app.layout = html.Div([

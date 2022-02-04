@@ -6,6 +6,7 @@ websocket serving the frames. This is directly inspired by:
 
 Author: Romain Fayat, January 2022
 """
+import pandas as pd
 import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
@@ -13,16 +14,21 @@ import dash_html_components as html
 from video_viewer.plots import Figure
 from video_viewer.video import VideoCamera
 from quart import Quart, websocket
-from dash.dependencies import Output, Input, State
+from dash.dependencies import Output, Input
 from dash_extensions import WebSocket
 import threading
 import asyncio
 import base64
 
 config = {
-    "figure": {
+    "video": {
+        "filename": "data/video.avi"
+    },
+    "read_csv": {
         "filepath_or_buffer": "data/time_series.csv",
         "index_col": "fnum",
+    },
+    "figure": {
         "trace_kwargs": {
             "x": {
                 "mode": "lines",
@@ -42,8 +48,9 @@ config = {
         }
     }
 }
-
-current_frame = 0  #  WARNING: GLOBAL variable for selecting the diplayed frame
+# WARNING: GLOBAL variables
+current_frame = 0  # Displayed frame
+df = pd.read_csv(**config["read_csv"])
 
 # Create the app and the layout
 server = Quart(__name__)
@@ -56,12 +63,17 @@ navbar = dbc.Navbar(
     color="#37393d", dark=True,
 )
 # Time series
-fig = Figure.from_csv(**config["figure"])
-range_slider = dcc.Slider(id="center_slider", min=0, max=1800, step=1, value=0)
+fig = Figure.from_dataframe(df, **config["figure"])
+range_slider = dcc.Slider(id="center_slider",
+                          min=df.index.values.min(),
+                          max=df.index.values.max(),
+                          step=1, value=0)
 # Size of the window
 input_width = dbc.InputGroup([
     dbc.InputGroupAddon("Size of the window", addon_type="prepend"),
-    dbc.Input(min=10, max=1800, value=300, type="number", id="input_width")],
+    dbc.Input(min=10, max=df.index.values.max(),
+              value=int(len(df) / 10),
+              type="number", id="input_width")],
     className="mb-1",
 )
 
@@ -79,7 +91,7 @@ async def stream(camera, delay=None):
 @server.websocket("/stream0")
 async def stream0():
     "Websocket for streaming frames."
-    camera = VideoCamera("data/video.avi")
+    camera = VideoCamera(**config["video"])
     # The delay is introduced here to limit CPU usage
     await stream(camera, delay=1/100)
 
@@ -87,7 +99,7 @@ async def stream0():
 # Global layout of the app
 app.layout = html.Div([
     navbar,
-    html.Img(style={'width': '40%', 'padding': 10}, id="v0"),
+    html.Img(style={'width': '60%', 'padding': 10}, id="v0"),
     WebSocket(url="ws://127.0.0.1:5000/stream0", id="ws0"),
     dcc.Graph(id="data_graph", figure=fig),
     html.Div([range_slider], style={"padding": 10}),
