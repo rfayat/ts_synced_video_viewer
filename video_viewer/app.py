@@ -20,7 +20,7 @@ import asyncio
 import base64
 
 config = {
-    "trace": {
+    "figure": {
         "filepath_or_buffer": "data/time_series.csv",
         "index_col": "fnum",
         "trace_kwargs": {
@@ -56,7 +56,7 @@ navbar = dbc.Navbar(
     color="#37393d", dark=True,
 )
 # Time series
-fig = Figure.from_csv(**config["trace"])
+fig = Figure.from_csv(**config["figure"])
 range_slider = dcc.Slider(id="center_slider", min=0, max=1800, step=1, value=0)
 # Size of the window
 input_width = dbc.InputGroup([

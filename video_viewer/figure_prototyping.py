@@ -12,7 +12,7 @@ import pandas as pd
 import numpy as np
 
 config = {
-    "trace": {
+    "figure": {
         "filepath_or_buffer": "data/time_series.csv",
         "index_col": "fnum",
         "trace_kwargs": {
@@ -31,7 +31,13 @@ config = {
                 "hoverinfo": "skip",
                 "line": {"color": "blue"}
             },
-        }
+        },
+        "fill_kwargs": {
+            "cluster": {
+                "y_b": -1,
+                "y_t": 1,
+            },
+        },
     }
 }
 
@@ -39,17 +45,21 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 # Time series
 n_points = 1800
-df = pd.DataFrame(np.random.random((n_points, 3)), columns=["x", "y", "z"])
+df = pd.DataFrame(np.random.random((n_points, 3)) - .5,
+                  columns=["x", "y", "z"])
+cluster = np.zeros(n_points, dtype=int)
+cluster[:100] = 1
+cluster[300:600] = 1
+cluster[1600:] = 1
+cluster[100:300] = 2
+cluster[1200:1400] = 2
+df["cluster"] = cluster
+
 fig = Figure.from_dataframe(
     df=df,
-    trace_kwargs=config["trace"]["trace_kwargs"],
+    trace_kwargs=config["figure"]["trace_kwargs"],
+    fill_kwargs=config["figure"]["fill_kwargs"],
     range_slider_visible=True)
-to_fill = np.zeros(n_points, dtype=bool)
-to_fill[:100] = True
-to_fill[500:600] = True
-to_fill[1000:1800] = True
-fig = fig.fill_areas(df.index.values, to_fill, y_b=-1, color="blue")
-fig = fig.fill_areas(df.index.values, ~to_fill, y_b=-1, color="red")
 
 # Layout of the app
 app.layout = html.Div([
