@@ -3,6 +3,7 @@
 Author: Romain Fayat, January 2022
 """
 import cv2
+import numpy as np
 
 
 class VideoCamera(cv2.VideoCapture):
@@ -10,7 +11,9 @@ class VideoCamera(cv2.VideoCapture):
 
     def get_frame(self, frame_number=None):
         "Grab the next frame from the video and return it as as bytes."
-        _, image = self.read(frame_number)
+        success, image = self.read(frame_number)
+        if not success:
+            image = np.zeros((self.height, self.width, 3), dtype=np.uint8)
         _, jpeg = cv2.imencode('.jpg', image)
         return jpeg.tobytes()
 
@@ -36,6 +39,16 @@ class VideoCamera(cv2.VideoCapture):
     def frame_count(self):
         "Return the number of frames in the video."
         return int(self.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    @property
+    def height(self):
+        "Height of the video, in pixels."
+        return int(self.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    @property
+    def width(self):
+        "Width of the video, in pixels."
+        return int(self.get(cv2.CAP_PROP_FRAME_WIDTH))
 
 
 class SynchedVideoCamera(VideoCamera):

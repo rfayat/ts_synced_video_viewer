@@ -12,7 +12,7 @@ import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 from video_viewer.plots import Figure
-from video_viewer.video import VideoCamera
+from video_viewer.video import SynchedVideoCamera
 from quart import Quart, websocket
 from dash.dependencies import Output, Input
 from dash_extensions import WebSocket
@@ -21,6 +21,7 @@ import asyncio
 import base64
 import sys
 import toml
+import numpy as np
 
 if len(sys.argv) < 2:
     raise ValueError("Expected path toml config file as input.")
@@ -31,6 +32,13 @@ config = toml.load(path_config)
 # WARNING: GLOBAL variables
 current_frame = 0  # Displayed frame
 df = pd.read_csv(**config["read_csv"])
+
+# Grab the synchronization column if needed
+if config.get("synchro", None) is not None:
+    synchro = df[config["synchro"]["col"]]
+else:
+    synchro = None
+
 
 # Create the app and the layout
 server = Quart(__name__)
@@ -45,9 +53,9 @@ navbar = dbc.Navbar(
 # Time series
 fig = Figure.from_dataframe(df, **config["figure"])
 range_slider = dcc.Slider(id="center_slider",
-                          min=df.index.values.min(),
-                          max=df.index.values.max(),
-                          step=1, value=0)
+                          min=df.index.values[0],
+                          max=df.index.values[-1],
+                          step=10, value=df.index.values[0])
 # Size of the window
 input_width = dbc.InputGroup([
     dbc.InputGroupAddon("Size of the window", addon_type="prepend"),
@@ -64,14 +72,14 @@ async def stream(camera, delay=None):
     while True:
         if delay is not None:
             await asyncio.sleep(delay)  # add delay if CPU usage is too high
-        frame = camera.get_frame(current_frame)
+        frame = camera.get_frame_from_synchro(current_frame)
         await websocket.send(f"data:image/jpeg;base64, {base64.b64encode(frame).decode()}")  # noqa E501
 
 
 @server.websocket("/stream0")
 async def stream0():
     "Websocket for streaming frames."
-    camera = VideoCamera(**config["video"])
+    camera = SynchedVideoCamera(synchro=synchro, **config["video"])
     # The delay is introduced here to limit CPU usage
     await stream(camera, delay=1/100)
 
@@ -114,4 +122,5 @@ def get_current_frame(center, width):
 
 if __name__ == "__main__":
     threading.Thread(target=app.run_server).start()
+    server.run()
     server.run()
