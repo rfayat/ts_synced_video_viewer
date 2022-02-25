@@ -93,8 +93,8 @@ class Figure(go.Figure):
         y_t, y_b, scalars
             Top and bottom bounds of the shaded areas.
         """
-        x_l_all = np.argwhere(np.append(where[0], ~where[:-1] & where[1:]))
-        x_r_all = np.argwhere(np.append(where[:-1] & ~where[1:], where[-1]))
+        x_l_all = x[np.argwhere(np.append(where[0], ~where[:-1] & where[1:]))]
+        x_r_all = x[np.argwhere(np.append(where[:-1] & ~where[1:], where[-1]))]
         for x_l, x_r in np.c_[x_l_all, x_r_all]:
             rectangle = go.Scattergl(
                 x=[x_l, x_r, x_r, x_l, x_l],
